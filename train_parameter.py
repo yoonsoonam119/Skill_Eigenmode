@@ -6,7 +6,7 @@ from train_package.train2 import train_loop
 from data_generator import Loader
 import argparse
 import os
-from executor import Dispensor, RangeSampler, ChopSampler, ListSampler
+from executor import Dispenser, RangeSampler, ChopSampler, ListSampler
 
 def arr2str(arr):
     return ' '.join([str(x) for x in arr])
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=5)
     args = parser.parse_args()
 
-    d = Dispensor(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
+    d = Dispenser(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
     d.add(ListSampler([5]), 'batch_mul')
     d.add(ListSampler([0.05]), 'lr')
     d.add(ListSampler([0.001]), 'init')

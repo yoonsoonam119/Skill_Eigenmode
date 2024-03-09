@@ -134,3 +134,49 @@ def check_corrs(model, tr_loaders, te_loaders, cnt=20000):
     print('skill losses: ', skill_losses)
     return corrs, skill_losses
 
+def train(model, train_loader, optimizer, criterion, m):
+    tr_loss = 0
+    tr_acc = 0
+    cnt = 0
+    for x, y in train_loader:
+        model.zero_grad()
+        logit = m(model(x))
+        loss = criterion(logit,y)
+        loss.backward()
+        optimizer.step()
+        with torch.no_grad():
+            tr_acc += torch.sum(logit * y > 0).detach().item()
+            tr_loss += loss.detach().item() *len(y)
+            cnt += len(y)
+    tr_loss /= cnt
+    tr_acc /= cnt
+    return tr_acc, tr_loss
+
+def test(model, test_loader, criterion, m):
+    te_loss = 0
+    te_acc = 0
+    cnt = 0
+    with torch.no_grad():
+        for x, y in test_loader:
+            logit = m(model(x))
+            loss = criterion(logit,y)
+            te_acc += torch.sum(logit * y > 0).detach().item()
+            te_loss += loss.detach().item() *len(y)
+            cnt += len(y)
+    te_loss /= cnt
+    te_acc /= cnt
+    return te_acc, te_loss
+
+def train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1,
+               criterion=nn.MSELoss(), m=nn.Identity()):
+    for i in range(epochs):
+        tr_acc, tr_loss = train(model, train_loader, optimizer, criterion, m)
+        te_acc, te_loss = test(model, test_loader, criterion, m)
+        print('train acc/loss', tr_acc, tr_loss)
+        print('test acc/loss', te_acc, te_loss)
+    if epochs == 0:
+        tr_acc, tr_loss = train(model, train_loader, criterion, m)
+        te_acc, te_loss = test(model, test_loader, criterion, m)
+        print('train acc/loss', tr_acc, tr_loss)
+        print('test acc/loss', te_acc, te_loss)
+    return tr_acc,te_acc, tr_loss, te_loss

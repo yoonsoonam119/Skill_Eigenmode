@@ -2,11 +2,11 @@ from utils import write2file, FCN, check_corrs
 import numpy as np
 import torch
 import torch.nn as nn
-from train_package.train2 import train_loop
+from utils import train_loop
 from data_generator import Loader
 import argparse
 import os
-from executor import Dispensor, RangeSampler, ChopSampler, ListSampler
+from executor import Dispenser, RangeSampler, ChopSampler, ListSampler
 
 def run(bits, data_cnt, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bit_cnt=3, init=0.1, y_scale=3, opt='sgd', act='relu', zero_mean=True):
     load_creator = Loader(bits=bits,skill_cnt=skill_cnt,skill_bit_cnt=skill_bit_cnt, alpha=alpha, y_scale=y_scale, zero_mean=zero_mean)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
     args = parser.parse_args()
 
-    d = Dispensor(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
+    d = Dispenser(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
     d.add(ListSampler([5]), 'batch_mul')
     d.add(ListSampler([0.05]), 'lr')
     d.add(ListSampler([0.001]), 'init')
