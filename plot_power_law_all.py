@@ -91,21 +91,30 @@ def plot_all(alphas, p = 1):
     ps0 = [axs[0].plot([0], [0], color='black', linestyle='dotted')[0]]
     legend0 = plt.legend(ps0, [r'$\mathcal{L}\propto T^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-2.0, 0.3),
                          handlelength=1, frameon=False)
+    legend00 = plt.legend(ps0, [r'$D,N\rightarrow \infty$'],bbox_to_anchor=(-2.1, 0.4),
+                         handlelength=0, frameon=False)
     fig.add_artist(legend0, )
+    fig.add_artist(legend00 )
 
     plot_ax(axs[1], data_theo, data_power, 'Data', eigss, alphas, 1, 1000)
     axs[1].set_xlabel('$D$')
     ps1 = [axs[1].plot([0], [0], color='black', linestyle='dotted')[0]]
     legend1 = plt.legend(ps1, [r'$\mathcal{L}\propto D^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-0.65, 0.3),
                          handlelength=1, frameon=False)
+    legend10 = plt.legend(ps1, [r'$N,T\rightarrow \infty$'],bbox_to_anchor=(-0.8, 0.4),
+                          handlelength=0, frameon=False)
     fig.add_artist(legend1, )
+    fig.add_artist(legend10 )
 
     plot_ax(axs[2], param_theo, param_power, 'Parameter', eigss, alphas, 2, 100)
     axs[2].set_xlabel('$N$')
     ps2 = [axs[2].plot([0], [0], color='black', linestyle='dotted')[0]]
     legend2 = plt.legend(ps2, [r'$\mathcal{L}\propto N^{-\alpha}$'],bbox_to_anchor=(0.5, 0.3),
                          handlelength=1, frameon=False)
+    legend20 = plt.legend(ps2, [r'$T,D\rightarrow \infty$'],bbox_to_anchor=(0.55, 0.4),
+                          handlelength=0, frameon=False)
     fig.add_artist(legend2, )
+    fig.add_artist(legend20 )
 
     handles, labels = axs[0].get_legend_handles_labels()
     ps = [axs[0].plot([0], [0], color=f'C{i}', linestyle='solid')[0] for i, tit in enumerate(alphas)]

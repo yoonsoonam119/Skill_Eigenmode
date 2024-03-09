@@ -58,6 +58,8 @@ class Loader():
         x = self.do_generate_data(train_cnt + test_cnt, self.bits)
         skill_idxs = (np.ones(train_cnt + test_cnt)*skill_idx).astype('int')
         y = np.mod(np.sum(x * (self.skill_mask[skill_idxs]), axis=1), 2)
+        if self.zero_mean:
+            y = 2*(y -0.5)
         #y= np.expand_dims(y,1)
         x = np.concatenate([self.skill_key[skill_idxs], x], axis=1)
 
