@@ -1,8 +1,8 @@
 /data/
-!*/data/zero/data/.gitignore
-!*/data/zero/parameter/.gitignore
-!*/data/zero/time/.gitignore
+!/data/zero/data/.gitignore
+!/data/zero/parameter/.gitignore
+!/data/zero/time/.gitignore
 /plot/
-!*/plot/data/.gitignore
-!*/plot/parameter/.gitignore
-!*/plot/time/.gitignore
+!/plot/data/.gitignore
+!/plot/parameter/.gitignore
+!/plot/time/.gitignore
