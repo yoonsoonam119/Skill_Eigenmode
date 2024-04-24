@@ -120,7 +120,7 @@ class Loader():
         return skill_key, skill_mask
 
 if __name__ == '__main__':
-    loader = Loader(bits=16,skill_cnt=2, skill_bit_cnt=1)
+    loader = Loader(bits=16,skill_cnt=5, skill_bit_cnt=3)
     train_loader, test_loader, _, _ = loader.get(20,5, 5)
     print(loader.skill_key)
     print(loader.skill_mask)

@@ -60,19 +60,36 @@ def param_theo(ps, eigs, s):
     ret = [np.power(s,2)/2 * np.sum(eigs[p:]) for p in ps]
     return ret
 
+def theo(ax, xs, eigs, lr, s, init, idx):
+    c = s/np.power(init,2)-1
+    rets = []
+    loss_diffs = 0
+    for i, eig in enumerate(eigs):
+        rks = 1/(1+c*np.exp(-2*s*xs*lr*eig))
+        loss_diffs += s*s*(1-np.power(1-rks,2))*eig/2
+        if i in [10,20,50,70,100,200,500,700,1000,2000,5000,10000]:
+            ax.plot(xs*(i+1), np.power(s,2)/2-loss_diffs, color=f'C{idx}')
 
-def plot_ax(ax, theo_func, power_func, name, eigss, alphas, idx, max_range=10000):
-    ts = np.arange(1,max_range)
-    for i, eigs in enumerate(eigss):
-        ax.plot(ts, theo_func(ts, eigs,s=1), color=f'C{i}')
-        ax.plot(ts, power_func(ts, alphas[i], eigs, s=1), color=f'C{i}', linestyle='dotted')
-    ax.set_title(latex_transform(f'{name} Scaling',idx,alp=True), y=-0.4)
+def plot_ax(ax, alpha, idx, ratio=1):
+    init = 0.1
+    lr = 5e0
+    p = 50000
+    s = 5
+    eigs = np.power(np.arange(p) + 1, -float(alpha) - 1)
+    eigs /= np.sum(eigs)
+    xs = np.logspace(1,8,1000)
+    theo(ax, xs, eigs, lr, s, init, idx)
+    qs = np.logspace(1,10,1000)
+    ax.plot(qs, s*s/2*ratio*np.power(qs, -alpha/(alpha+2)), linestyle='dotted', color=f'C{idx}')
+    #ax.plot(qs, s*s/2*ratio*np.power(qs, -alpha*(alpha+1)/(alpha+(alpha+1)*(alpha+1))), linestyle='dotted', color=f'C{idx}')
+    #ax.set_title(latex_transform(rf'\alpha={alpha}',idx,alp=True), y=-0.4)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0,
                      box.width, box.height * 0.9])
     ax.set_xscale('log')
     ax.set_yscale('log')
-    ax.set_xticks([1, 10, 100, 1000, 10000])
+    ax.set_xlim(1e2,1e9)
+    #ax.set_xticks([1, 10, 100, 1000, 10000])
     ax.set_ylabel(r'$\mathcal{L}$')
 
 
@@ -80,53 +97,25 @@ def plot_all(alphas, p = 1):
     fig, axs = plt.subplots(1, 3, figsize=(10,2.5),gridspec_kw={'top':0.95, 'bottom': 0.15})
     plt.subplots_adjust(wspace=0.36)
 
-    eigss = []
-    for alpha in alphas:
-        eigs = np.power(np.arange(p) + 1, -float(alpha)-1)
-        eigs /= np.sum(eigs)
-        eigss.append(eigs)
-    linst = ['solid', 'dashed', 'dotted']
-    plot_ax(axs[0], temp_theo, temp_power, 'Time', eigss, alphas, 0,10000)
-    axs[0].set_xlabel('$T$')
-    ps0 = [axs[0].plot([0], [0], color='black', linestyle='dotted')[0]]
-    legend0 = plt.legend(ps0, [r'$\mathcal{L}\propto T^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-2.03, 0.3),
-                         handlelength=1, frameon=False)
-    legend00 = plt.legend(ps0, [r'$D,N\rightarrow \infty$'],bbox_to_anchor=(-2.13, 0.4),
-                         handlelength=0, frameon=False)
-    fig.add_artist(legend0, )
-    fig.add_artist(legend00 )
+    ratios = [0.6, 0.5, 0.4]
+    #ratios = [1.0, 1.0, 1.0]
 
-    plot_ax(axs[1], data_theo, data_power, 'Data', eigss, alphas, 1, 1000)
-    axs[1].set_xlabel('$D$')
-    ps1 = [axs[1].plot([0], [0], color='black', linestyle='dotted')[0]]
-    legend1 = plt.legend(ps1, [r'$\mathcal{L}\propto D^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-0.65, 0.3),
-                         handlelength=1, frameon=False)
-    legend10 = plt.legend(ps1, [r'$N,T\rightarrow \infty$'],bbox_to_anchor=(-0.8, 0.4),
-                          handlelength=0, frameon=False)
-    fig.add_artist(legend1, )
-    fig.add_artist(legend10 )
-
-    plot_ax(axs[2], param_theo, param_power, 'Parameter', eigss, alphas, 2, 100)
-    axs[2].set_xlabel('$N$')
-    ps2 = [axs[2].plot([0], [0], color='black', linestyle='dotted')[0]]
-    legend2 = plt.legend(ps2, [r'$\mathcal{L}\propto N^{-\alpha}$'],bbox_to_anchor=(0.53, 0.3),
-                         handlelength=1, frameon=False)
-    legend20 = plt.legend(ps2, [r'$T,D\rightarrow \infty$'],bbox_to_anchor=(0.58, 0.4),
-                          handlelength=0, frameon=False)
-    fig.add_artist(legend2, )
-    fig.add_artist(legend20 )
+    for i, (alpha,ratio) in enumerate(zip(alphas,ratios)):
+        plot_ax(axs[i], alpha, i, ratio=ratio)
+        axs[i].set_xlabel('$C$')
+        ps0 = [axs[i].plot([0], [0], color='black', linestyle='dotted')[0]]
 
     handles, labels = axs[0].get_legend_handles_labels()
     ps = [axs[0].plot([0], [0], color=f'C{i}', linestyle='solid')[0] for i, tit in enumerate(alphas)]
     #legend1 = plt.legend(ps, [title for title in titles], ncol=len(titles), loc=(-0.55,1.1))
     legend_ = plt.legend(ps, [r'$\alpha=$' + f'{alpha}' for alpha in alphas], ncol=len(alphas), loc='lower center',
-                         fontsize=13,
+                         fontsize=15,
                          columnspacing=1, handlelength=1, bbox_to_anchor=(-1.9, 1.00, 2.0, 0.3), frameon=False)
     fig.add_artist(legend_)
     #plt.gca().add_artist(legend1)
 
-    fig.savefig(f'plot/power_law_all', dpi=300, bbox_inches='tight')
-    fig.savefig(f'plot/power_law_all.pdf',format="pdf", dpi=300, bbox_inches='tight')
+    fig.savefig(f'plot/simul_compute_scaling', dpi=300, bbox_inches='tight')
+    fig.savefig(f'plot/simul_compute_scaling.pdf',format="pdf", dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 if __name__ == '__main__':

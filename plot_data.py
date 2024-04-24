@@ -8,7 +8,7 @@ import argparse
 import os
 
 matplotlib.rcParams['mathtext.fontset'] = 'cm'
-matplotlib.rc('font', **{'size':11})
+matplotlib.rc('font', **{'size':15})
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -34,7 +34,7 @@ def cumul_std(arr):
 def trunc(values, decs=3):
     return np.trunc(values*10**decs)/(10**decs)
 
-def theo(xs, param_dict, args, eig):
+def theo(xs, args, eig):
     lk = 1-xs*eig/args.theparam
     lk *= lk >0
     return 1- np.sqrt(lk)
@@ -50,33 +50,54 @@ if __name__ == '__main__':
     #parser.add_argument("-w", "--width", help="width", type=int, default=100)
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
     parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=5)
-    parser.add_argument("-s", "--theparam", help="theparam", type=float, default=15)
+    parser.add_argument("-s", "--theparam", help="theparam", type=float, default=800)
     args = parser.parse_args()
     name = '64_20_5_001_15_005_3_5'
+    alphas = [1.3, 1.6, 1.9]
+    for alpha in alphas:
+        param_dict = {'bits': 32, 'skill_cnt': 5, 'batch_mul': 5, 'lr': 0.05, 'alpha': alpha,
+                      'init': 0.001,
+                      'skill_bit_cnt': 3, 'y_scale': 5, 'opt': args.opt, 'act': args.act}
+        eigs = np.power(np.arange(param_dict['skill_cnt'])+1, -param_dict['alpha'])
+        eigs /= np.sum(eigs)
 
-    param_dict = {'bits': 16, 'skill_cnt': 5, 'batch_mul': 5, 'lr': 0.05, 'alpha': 1.6,
-                  'init': 0.001,
-                  'skill_bit_cnt': 3, 'y_scale': 5, 'opt': args.opt, 'act': args.act}
+        #xs = np.array(list(np.arange(500, 10500, 500)) + list(np.arange(10000, 40000, 5000)))
+        xs = np.array(list(np.arange(500, 10500, 500)) + list(np.arange(10000, 30000, 5000)))
+        xs = np.array(list(np.arange(500, 10500, 500)) + list(np.arange(10000, 16000, 1000)) + list(np.arange(20000, 40000, 5000)))
+        corrs_mean, corrs_std, skills_mean, skills_std, te_mean, te_std = file2mem('data', xs, param_dict, zero=True)
+        for i, (c_mean, c_std, eig) in enumerate(zip(corrs_mean, corrs_std, eigs)):
+            #plt.errorbar(xs, c_mean/param_dict['y_scale'], c_std/param_dict['y_scale'], label=rf'$I={i+1}$', color=f'C{i}')
+            plt.plot(xs, c_mean/param_dict['y_scale'], label=rf'$k={i+1}$', linestyle='dashed', color=f'C{i}')
+            plt.fill_between(xs, (c_mean + c_std) / param_dict['y_scale'],
+                             (c_mean - c_std) / param_dict['y_scale'],
+                             color=f'C{i}', alpha=0.2)
+            plt.plot(xs, theo(xs, args, eig), linestyle='solid', color=f'C{i}')
+            if i == 4:
+                break
+        #plt.legend()
+        ps = [plt.plot([0], [0], color=f'C{i}', linestyle='solid')[0] for i in range(5)]
+        ps = [plt.plot([0], [0], color='white', linestyle='solid')[0]] + ps
+        #legend1 = plt.legend(ps, [title for title in titles], ncol=len(titles), loc=(-0.55,1.1))
+        legend_ = plt.legend(ps, [r'$k=$' if i ==0 else rf'${i}$' for i in range(6)], ncol=6, loc='lower center',
+                             fontsize=20,
+                             columnspacing=1, handlelength=0.7, bbox_to_anchor=(0.45, 0.97), frameon=False)
+        plt.xlabel(R'$D$', fontdict={'fontsize':20})
+        plt.ylabel(r'$\mathcal{R}_k/S$', fontdict={'fontsize':20})
+        plt.xscale('log')
+        #plt.xlim(0,5000)
+        plt.savefig(f'plot/data/data_corr_{dict2str(**param_dict)}', bbox_inches='tight')
+        plt.savefig(f'plot/data/data_corr_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
+        plt.close()
 
-    xs = list(np.arange(1000,6001,100))
-    corrs_mean, corrs_std, skills_mean, skills_std, te_mean, te_std = file2mem('data', xs, param_dict, zero=True)
-    for i, (c_mean, c_std) in enumerate(zip(corrs_mean, corrs_std)):
-        plt.errorbar(xs, c_mean, c_std, label=rf'$k={i}$', color=f'C{i}')
-        plt.plot(xs, theo(xs, param_dict, args), linestyle='dashed', color=f'C{i}')
-    plt.legend()
-    plt.xlabel(R'$N$')
-    plt.ylabel(r'$\mathcal{R}_k$')
-    plt.savefig(f'plot/data/data_corr_{dict2str(**param_dict)}', bbox_inches='tight')
-    plt.savefig(f'plot/data/data_corr_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
-    plt.close()
-
-    for i, (s_mean, s_std) in enumerate(zip(skills_mean, skills_std)):
-        plt.errorbar(xs, s_mean, s_std, label=rf'$k={i}$', color=f'C{i}')
-        plt.plot(xs, np.power(param_dict['y_scale'] * (1 - theo(xs, param_dict, args)), 2), linestyle='dashed',
-                 color=f'C{i}')
-    plt.legend()
-    plt.xlabel(R'$N$')
-    plt.ylabel(r'$\mathcal{L}_k$')
-    plt.savefig(f'plot/data/data_skill_{dict2str(**param_dict)}', bbox_inches='tight')
-    plt.savefig(f'plot/data/data_skill_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
-    plt.close()
+        for i, (s_mean, s_std, eig) in enumerate(zip(skills_mean, skills_std, eigs)):
+            plt.errorbar(xs, s_mean/2, s_std/2, label=rf'$k={i}$', color=f'C{i}')
+            plt.plot(xs, np.power(param_dict['y_scale'] * (1 - theo(xs, args, eig)), 2), linestyle='dashed',
+                     color=f'C{i}')
+            if i == 4:
+                break
+        plt.legend()
+        plt.xlabel(R'$D$')
+        plt.ylabel(r'$\mathcal{L}_k$')
+        plt.savefig(f'plot/data/data_skill_{dict2str(**param_dict)}', bbox_inches='tight')
+        plt.savefig(f'plot/data/data_skill_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
+        plt.close()

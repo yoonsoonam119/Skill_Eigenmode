@@ -1,12 +1,12 @@
-from utils import write2file, FCN, check_corrs
+from utils import write2file, FCN, check_corrs, train_loop
 import numpy as np
 import torch
 import torch.nn as nn
-from utils import train_loop
+#from train_package.train2 import train_loop
 from data_generator import Loader
 import argparse
 import os
-from executor import Dispenser, RangeSampler, ChopSampler, ListSampler
+from executor import Dispensor, RangeSampler, ChopSampler, ListSampler
 
 def run(bits, data_cnt, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bit_cnt=3, init=0.1, y_scale=3, opt='sgd', act='relu', zero_mean=True):
     load_creator = Loader(bits=bits,skill_cnt=skill_cnt,skill_bit_cnt=skill_bit_cnt, alpha=alpha, y_scale=y_scale, zero_mean=zero_mean)
@@ -26,9 +26,9 @@ def run(bits, data_cnt, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bi
         skill_te_loaders.append(te_loader)
     train_loader, test_loader, _, _ = load_creator.get(train_cnt=data_cnt, test_cnt=1000, batch_size=int(data_cnt // batch_mul))
     for epo in range(100000):
-        print('main', epo)
         train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1, criterion=nn.MSELoss(), m=nn.Identity())
         if epo % 10000 == 0:
+            print('main', epo)
             optimizer.param_groups[0]['lr'] *= 0.5
             check_corrs(model, skill_tr_loaders, skill_te_loaders)
             continue
@@ -49,14 +49,16 @@ if __name__ == '__main__':
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
     args = parser.parse_args()
 
-    d = Dispenser(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
-    d.add(ListSampler([5]), 'batch_mul')
+    d = Dispensor(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
+    d.add(ListSampler([1]), 'batch_mul')
     d.add(ListSampler([0.05]), 'lr')
     d.add(ListSampler([0.001]), 'init')
     d.add(ListSampler([5]), 'y_scale')
+    #d.add(ListSampler([1.3, 1.6, 1.9]), 'alpha')
     d.add(ListSampler([1.6]), 'alpha')
     if args.iter_dict:
         data_list = list(np.arange(500,10500,500)) + list(np.arange(10000,40000,5000))
+        #data_list = list(np.arange(11000,15000,1000))
     else:
         data_list = [2000,4000]
     print(data_list)
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     for d_args in d:
         print(d_args)
         if args.iter_dict:
-            param_dict = {'bits': args.bits, 'skill_cnt': 5*int(args.bits//16),
+            param_dict = {'bits': args.bits, 'skill_cnt': 5,
                           'batch_mul': max(1, d_args['data_cnt']//2000), 'lr': d_args['lr'],
                           'alpha': d_args['alpha'], 'init': d_args['init'], 'skill_bit_cnt':3,
                           'y_scale': d_args['y_scale'], 'opt': args.opt, 'act': args.act}

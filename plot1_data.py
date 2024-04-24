@@ -8,7 +8,7 @@ import argparse
 import os
 
 matplotlib.rcParams['mathtext.fontset'] = 'cm'
-matplotlib.rc('font', **{'size':11})
+matplotlib.rc('font', **{'size':15})
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -39,6 +39,11 @@ def theo(xs, param_dict, args):
     ys *= ys >0
     return ys
 
+def theo_corrs(xs, param_dict, args):
+    ys = np.power(param_dict['y_scale'],2)*(1-xs/args.theparam)
+    ys *= ys >0
+    return (param_dict['y_scale'] - np.sqrt(theo(xs, param_dict,args)))/param_dict['y_scale']
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output", help="outputpath", type=str, default=os.getcwd())
@@ -50,19 +55,24 @@ if __name__ == '__main__':
     #parser.add_argument("-w", "--width", help="width", type=int, default=100)
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
     parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=5)
-    parser.add_argument("-s", "--theparam", help="theparam", type=float, default=15)
+    parser.add_argument("-s", "--theparam", help="theparam", type=float, default=800)
     args = parser.parse_args()
     name = '64_20_5_001_15_005_3_5'
 
-    param_dict = {'bits': 16, 'skill_cnt': 1, 'batch_mul': 5, 'lr': 0.05, 'alpha': 1.6,
+    param_dict = {'bits': 32, 'skill_cnt': 1, 'batch_mul': 5, 'lr': 0.05, 'alpha': 1.6,
                   'init': 0.001,
                   'skill_bit_cnt': 3, 'y_scale': 5, 'opt': args.opt, 'act': args.act}
 
-    xs = list(np.arange(1000,6001,100))
+    #xs = list(np.arange(1000,6001,100))
+    xs = np.arange(100,2001,100)
     corrs_mean, corrs_std, skills_mean, skills_std, te_mean, te_std = file2mem('data', xs, param_dict, zero=True)
     plt.errorbar(xs, te_mean/2, te_std/2, label='NN')
-    plt.plot(xs, theo(xs, param_dict, args)/2, label='extended toy', linestyle='dashed', color='C0')
-    plt.legend()
+    plt.plot(xs, theo(xs, param_dict, args), label='extended toy', linestyle='dashed', color='C0')
+    #plt.legend()
+    ps = [plt.plot([0], [0], color='C0', linestyle='solid')[0], plt.plot([0], [0], color='C0', linestyle='dashed')[0]]
+    legend_ = plt.legend(ps, [rf'${i}$' for i in ['NN', 'extended~model']], ncol=2, loc='lower center',
+                         fontsize=16,
+                         columnspacing=1, handlelength=1, bbox_to_anchor=(0.5, 0.97), frameon=False)
     #plt.plot(data_cnts, sigmoid(data_cnts, 0.002, 1000))
     #plt.axvline(5000, color='black', linestyle='dotted')
     plt.xlabel(R'$D$')
@@ -72,4 +82,29 @@ if __name__ == '__main__':
 
     plt.savefig(f'plot/data/data1_{dict2str(**param_dict)}', bbox_inches='tight')
     plt.savefig(f'plot/data/data1_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    plt.plot(xs, theo_corrs(xs, param_dict, args), label='extended toy', linestyle='solid', color='C0')
+    #plt.errorbar(xs, corrs_mean[0]/param_dict['y_scale'], corrs_std[0]/param_dict['y_scale'], label='NN')
+    ps = [plt.plot([0], [0], color='C0', linestyle='solid')[0], plt.plot([0], [0], color='C0', linestyle='dashed')[0]]
+    # legend1 = plt.legend(ps, [title for title in titles], ncol=len(titles), loc=(-0.55,1.1))
+    plt.plot(xs, corrs_mean[0]/param_dict['y_scale'], label='NN', linestyle='dashed')
+    plt.fill_between(xs, (corrs_mean[0] + corrs_std[0]) / param_dict['y_scale'],
+                     (corrs_mean[0] - corrs_std[0]) / param_dict['y_scale'],
+                     color=f'C{0}', alpha=0.2)
+    legend_ = plt.legend(ps, [rf'${i}$' for i in ['extended~model','NN']], ncol=2, loc='lower center',
+                         fontsize=20,
+                         columnspacing=1, handlelength=0.7, bbox_to_anchor=(0.45, 0.97), frameon=False)
+    #plt.legend()
+    #plt.plot(data_cnts, sigmoid(data_cnts, 0.002, 1000))
+    #plt.axvline(5000, color='black', linestyle='dotted')
+    plt.xlim(100,1700)
+    plt.xticks([200,400,600,800,1000,1200,1400,1600])
+    plt.xlabel(R'$D$', fontdict={'fontsize':20})
+    plt.ylabel(r'$\mathcal{R}_1/S$', fontdict={'fontsize':20})
+    #plt.xscale('log')
+    #plt.yscale('log')
+
+    plt.savefig(f'plot/data/data1_corrs_{dict2str(**param_dict)}', bbox_inches='tight')
+    plt.savefig(f'plot/data/data1_corrs_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
     plt.close()
