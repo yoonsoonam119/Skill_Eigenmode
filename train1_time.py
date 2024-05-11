@@ -1,8 +1,8 @@
-from utils import write2file, FCN, check_corrs
+from utils import write2file, FCN, check_corrs, train_loop
 import numpy as np
 import torch
 import torch.nn as nn
-from utils import train_loop
+#from train_package.train2 import train_loop
 from data_generator import Loader
 import argparse
 import os
@@ -18,8 +18,6 @@ def run(bits, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bit_cnt=3, i
         print('adam')
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     skill_losses = []
-    #model.to(torch.device('cuda'))
-    #train_loader, test_loader, _, _ = load_creator.get(train_cnt=200000, test_cnt=1000, batch_size=200000 // batch_mul)
     skill_tr_loaders = []
     skill_te_loaders = []
     corrs_arr = []
@@ -29,11 +27,11 @@ def run(bits, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bit_cnt=3, i
                                                                       batch_size=20000)
         skill_tr_loaders.append(tr_loader)
         skill_te_loaders.append(te_loader)
-    for epo in range(2000):
+    for epo in range(1000):
         train_loader, test_loader, _, _ = load_creator.get(train_cnt=20000, test_cnt=1000, batch_size=20000//batch_mul)
-        print('main', epo)
         tr_acc,te_acc, tr_loss, te_loss = train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1, criterion=nn.MSELoss(), m=nn.Identity())
         if epo % 10 == 0:
+            print('main', epo)
             te_loss_arr.append(te_loss)
             corrs, skill_loss = check_corrs(model, skill_tr_loaders, skill_te_loaders)
             corrs_arr.append(corrs)
@@ -53,11 +51,11 @@ if __name__ == '__main__':
 
     d = Dispenser(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
     d.add(ListSampler([5]), 'batch_mul')
-    d.add(ListSampler([0.05]), 'lr')
-    d.add(ListSampler([0.001]), 'init')
+    d.add(ListSampler([0.02]), 'lr')
+    d.add(ListSampler([0.1]), 'init')
     d.add(ListSampler([5]), 'y_scale')
     d.add(ListSampler([1.6]), 'alpha')
-    try_cnt = 20
+    try_cnt = 50
     zero_mean_str = 'zero' if args.zero_mean else ''
 
     for d_args in d:

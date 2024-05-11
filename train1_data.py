@@ -1,8 +1,8 @@
-from utils import write2file, FCN, check_corrs
+from utils import write2file, FCN, check_corrs, train_loop
 import numpy as np
 import torch
 import torch.nn as nn
-from utils import train_loop
+#from train_package.train2 import train_loop
 from data_generator import Loader
 import argparse
 import os
@@ -26,9 +26,9 @@ def run(bits, data_cnt, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bi
         skill_te_loaders.append(te_loader)
     train_loader, test_loader, _, _ = load_creator.get(train_cnt=data_cnt, test_cnt=1000, batch_size=int(data_cnt // batch_mul))
     for epo in range(30000):
-        print('main', epo)
         train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1, criterion=nn.MSELoss(), m=nn.Identity())
         if epo % 10000 == 0:
+            print('main', epo)
             optimizer.param_groups[0]['lr'] *= 0.5
             check_corrs(model, skill_tr_loaders, skill_te_loaders)
             continue
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     data_list = list(np.arange(100,2001,100))
     print(data_list)
     d.add(ListSampler(data_list), 'data_cnt')
-    d.add(ListSampler(np.arange(20)), 'try')
+    d.add(ListSampler(np.arange(50)), 'try')
     zero_mean_str = 'zero_' if args.zero_mean else ''
 
     for d_args in d:
@@ -69,7 +69,7 @@ if __name__ == '__main__':
                           'alpha': d_args['alpha'], 'init': d_args['init'], 'skill_bit_cnt':3,
                           'y_scale': d_args['y_scale'], 'opt': args.opt, 'act': args.act}
         else:
-            param_dict = {'bits': 16, 'skill_cnt': 1, 'batch_mul': max(1,d_args['data_cnt']//2000), 'lr':0.001,'alpha':1.5, 'init':0.05,
+            param_dict = {'bits': 32, 'skill_cnt': 1, 'batch_mul': max(1,d_args['data_cnt']//2000), 'lr':0.001,'alpha':1.5, 'init':0.05,
                           'skill_bit_cnt':3, 'y_scale': 5, 'opt':args.opt, 'act':args.act}
         te_loss, skill_loss, corrs, skill_mask = run(zero_mean = args.zero_mean, data_cnt=d_args['data_cnt'], **param_dict)
         write2file('data', d_args['data_cnt'], skill_loss, corrs, te_loss, param_dict, zero=args.zero_mean)

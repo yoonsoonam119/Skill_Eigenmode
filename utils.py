@@ -168,15 +168,17 @@ def test(model, test_loader, criterion, m):
     return te_acc, te_loss
 
 def train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1,
-               criterion=nn.MSELoss(), m=nn.Identity()):
+               criterion=nn.MSELoss(), m=nn.Identity(), verbose=True):
     for i in range(epochs):
         tr_acc, tr_loss = train(model, train_loader, optimizer, criterion, m)
         te_acc, te_loss = test(model, test_loader, criterion, m)
-        print('train acc/loss', tr_acc, tr_loss)
-        print('test acc/loss', te_acc, te_loss)
+        if verbose:
+            print('train acc/loss', tr_acc, tr_loss)
+            print('test acc/loss', te_acc, te_loss)
     if epochs == 0:
         tr_acc, tr_loss = train(model, train_loader, criterion, m)
         te_acc, te_loss = test(model, test_loader, criterion, m)
-        print('train acc/loss', tr_acc, tr_loss)
-        print('test acc/loss', te_acc, te_loss)
+        if verbose:
+            print('train acc/loss', tr_acc, tr_loss)
+            print('test acc/loss', te_acc, te_loss)
     return tr_acc,te_acc, tr_loss, te_loss

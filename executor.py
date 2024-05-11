@@ -26,7 +26,6 @@ class Dispenser:
             self.cur_worker = 0
         name += f'_{self.cur_worker}'
         self.f = open(os.path.join(dir, name), 'w')
-        #self.cur_worker=0
         self.cur_elem = self.cur_worker - self.worker_cnt
         self.samplers = OrderedDict()
         self.idx_shape = []
@@ -51,7 +50,6 @@ class Dispenser:
         self.cur_elem += self.worker_cnt
         if self.cur_elem >= self.tot_cnt:
             raise StopIteration
-        #idxs = [int(elem) for elem in np.where(self.idx_ndarr == self.cur_elem)]
         idxs = self.cur_idx2idxs(self.cur_elem)
         self.cur = OrderedDict()
         for (name, sampler), idx in zip(self.samplers.items(), idxs):
@@ -74,7 +72,6 @@ class Dispenser:
         if novalues and not report:
             print(*args, file=self.f, flush=True)
         elif report:
-            #args is the report
             if novalues:
                 for arg in args:
                     print(*arg, file=self.f, flush=True)
@@ -107,17 +104,3 @@ if __name__ == '__main__':
     a.add(IntSampler(2,[0,10]),'hi')
     a.add(IntSampler(3,[0,10]),'hi2')
     a.add(IntSampler(5,[0,10]),'hi3')
-
-    '''
-    for i in range(30):
-        print(a.cur_idx2idxs(i))
-    exit()
-    '''
-    print(a)
-    for _ in a:
-        a.print_('test')
-
-    print(__file__)
-    with open('data/name','r') as f:
-        for line in f:
-            print(a.read(line))
