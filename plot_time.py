@@ -50,37 +50,69 @@ if __name__ == '__main__':
     parser.add_argument("-a", "--act", help="activation", type=str, default='relu')
     #parser.add_argument("-w", "--width", help="width", type=int, default=100)
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
-    parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=5)
-    parser.add_argument("-s", "--theparam", help="theparam", type=float, default=18000)
+    parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=6)
+    parser.add_argument("-s", "--theparam", help="theparam", type=float, default=6)
     args = parser.parse_args()
     name = '64_20_5_001_15_005_3_5'
+    import glob 
+    # for dict_str in glob.glob('data/zero/time/corr_*'):
+    #     if '5_50_5e-05_19' not in dict_str:
+    #         continue
+    for _ in range(1):
+        dict_str = 'time_corr_32_5_50_5e-05_19_10_3_1'
+        
+        dict_str = dict_str.split("corr_")[-1][:-4]
 
-    param_dict = {'bits': 16, 'skill_cnt': 5, 'batch_mul': 5, 'lr': 0.05, 'alpha': 1.6,
-                  'init': 0.001,
-                  'skill_bit_cnt': 3, 'y_scale': 5, 'opt': args.opt, 'act': args.act}
+        
+        # NAME = 'transformer' #dict2str(**param_dict)
+        # dict_str = '32_8_50_0001_15_10_3_5'
+        # dict_str = '32_6_50_0001_15_10_3_5_09_50_41_227136'
+        # dict_str = '32_8_50_00001_15_10_3_5_18_19_36_530533'
+        NAME = dict_str
 
-    xs = np.arange(1000,6001,100)
-    xs = np.arange(1000,6001,1000)
-    corrs_mean, corrs_std, skills_mean, skills_std, te_mean, te_std = file2mem('time', xs, param_dict, zero=True)
-    eigs = np.power(np.arange(param_dict['skill_cnt'])+1, -param_dict['alpha'])
-    eigs /= np.sum(eigs)
-    for i, (c_mean, c_std) in enumerate(zip(corrs_mean, corrs_std)):
-        plt.errorbar(xs, c_mean, c_std, label=rf'$k={i}$', color=f'C{i}')
-        plt.plot(xs, theo(xs, param_dict, args, eigs[i]), linestyle='dashed', color=f'C{i}')
-    plt.legend()
-    plt.xlabel(R'$T$')
-    plt.ylabel(r'$\mathcal{R}_k$')
-    plt.savefig(f'plot/time/time_corr_{dict2str(**param_dict)}', bbox_inches='tight')
-    plt.savefig(f'plot/time/time_corr_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
-    plt.close()
+        n_skills = int(dict_str.split('_')[1])
 
-    for i, (s_mean, s_std) in enumerate(zip(skills_mean, skills_std)):
-        plt.errorbar(xs, s_mean, s_std, label=rf'$k={i}$', color=f'C{i}')
-        plt.plot(xs, np.power(param_dict['y_scale']*(1-theo(xs, param_dict, args, eigs[i])),2), linestyle='dashed', color=f'C{i}')
-    plt.legend()
-    plt.xlabel(R'$T$')
-    plt.ylabel(r'$\mathcal{L}_k$')
-    plt.savefig(f'plot/time/time_skill_{dict2str(**param_dict)}', bbox_inches='tight')
-    plt.savefig(f'plot/time/time_skill_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
-    plt.close()
+        param_dict = {'bits': 16, 'skill_cnt': n_skills, 'batch_mul': 1, 'lr': 0.0005, 'alpha': 1.9,
+                    'init': 0.001,
+                    'skill_bit_cnt': 5, 'y_scale': 1, 'opt': args.opt, 'act': args.act}
+
+        xs = np.arange(1000,6001,100)
+        xs = np.arange(1000,6001,1000)
+        corrs_mean, corrs_std, skills_mean, skills_std, te_mean, te_std = file2mem('time', xs, param_dict, zero=True, dict_str=dict_str)
+        eigs = np.power(np.arange(param_dict['skill_cnt'])+1, -param_dict['alpha'])
+        eigs /= np.sum(eigs)
+        fig, ax = plt.subplots()
+        for i, (c_mean, c_std) in enumerate(zip(corrs_mean, corrs_std)):
+            xs = np.array([(100*i)+1 for i in range(len(c_mean))])
+            ax.plot(xs, c_mean/param_dict['y_scale'], label=rf'$k={i}$', color=f'C{i}')
+            ax.fill_between(xs, (c_mean + c_std)/param_dict['y_scale'], (c_mean - c_std)/param_dict['y_scale'],  color=f'C{i}', alpha=0.2)
+            # ax.plot(xs, theo(xs, param_dict, args, i), linestyle='solid', color=f'C{i}')
+            # xs = np.array([(100*i)+1 for i in range(len(c_mean))])
+            # ax.errorbar(xs, c_mean, c_std, label=rf'$k={i}$', color=f'C{i}', alpha=0.2)
+            ax.plot(xs, theo(xs, param_dict, args, eigs[i]), linestyle='dashed', color=f'C{i}')
+        ax.legend()
+        ax.set_xlabel(R'$T$')
+        ax.set_ylabel(r'$\mathcal{R}_k$')
+        ax.set_xscale('log')
+        ax.set_xlim([1e3, 1e6])
+
+        
+
+        plt.savefig(f'plot/time/time_corr_{NAME}', bbox_inches='tight')
+        # plt.savefig(f'plot/time/time_corr_{NAME}.pdf', format='pdf', dpi=300, bbox_inches='tight')
+        plt.close()
+
+        # fig, ax = plt.subplots()
+        # for i, (s_mean, s_std) in enumerate(zip(skills_mean, skills_std)):
+        #     xs = np.array([(100*i)+1 for i in range(len(s_mean))])
+        #     ax.errorbar(xs, s_mean, s_std, label=rf'$k={i}$', color=f'C{i}')
+        #     ax.plot(xs, np.power(param_dict['y_scale']*(1-theo(xs, param_dict, args, eigs[i])),2), linestyle='dashed', color=f'C{i}')
+        # ax.legend()
+        # ax.set_xlabel(R'$T$')
+        # ax.set_ylabel(r'$\mathcal{L}_k$')
+        # # ax.set_xlim([1e3, 1e6])
+        # # ax.set_xscale('log')
+        # plt.savefig(f'plot/time/time_skill_{NAME}', bbox_inches='tight')
+        # # plt.savefig(f'plot/time/time_skill_{NAME}.pdf', format='pdf', dpi=300, bbox_inches='tight')
+        # plt.close()
 
