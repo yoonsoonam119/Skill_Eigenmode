@@ -2,11 +2,10 @@ from utils import write2file, FCN, check_corrs, train_loop
 import numpy as np
 import torch
 import torch.nn as nn
-#from train_package.train2 import train_loop
 from data_generator import Loader
 import argparse
 import os
-from executor import Dispensor, RangeSampler, ChopSampler, ListSampler
+from executor import Dispenser, ListSampler
 
 def arr2str(arr):
     return ' '.join([str(x) for x in arr])
@@ -28,16 +27,14 @@ def run(bits, width, skill_cnt=5, batch_mul=200, lr=0.001,alpha=2.0, skill_bit_c
                                                                       batch_size=20000)
         skill_tr_loaders.append(tr_loader)
         skill_te_loaders.append(te_loader)
-    for epo in range(50000):
+    for epo in range(100000):
         train_loader, test_loader, _, _ = load_creator.get(train_cnt=20000, test_cnt=1000, batch_size=20000//batch_mul)
         tr_acc,te_acc, tr_loss, te_loss = train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1, criterion=nn.MSELoss(), m=nn.Identity())
         te_loss_arr.append(te_loss)
         if epo % 100 == 0:
             print('main', epo)
-            #if epo != 0 and epo % 5000 == 0:
             if epo == 5000:
                 optimizer.param_groups[0]['lr'] *= 1.0
-                #optimizer.param_groups[0]['weight_decay'] += 0.0000005
             print(te_loss)
             check_corrs(model, skill_tr_loaders, skill_te_loaders)
     tr_acc,te_acc, tr_loss, te_loss = train_loop(model, train_loader, test_loader, optimizer, report=False, epochs=1, criterion=nn.MSELoss(),
@@ -51,23 +48,21 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output", help="outputpath", type=str, default=os.getcwd())
     parser.add_argument("-n", "--worker_cnt", help="worker_cnt", type=int, default=1)
     parser.add_argument("-i", "--iter_dict", help="do_iteration", type=int, default=0)
-    parser.add_argument("-b", "--bits", help="bits", type=int, default=16)
+    parser.add_argument("-b", "--bits", help="bits", type=int, default=32)
     parser.add_argument("-p", "--opt", help="opts", type=str, default='sgd')
     parser.add_argument("-a", "--act", help="activation", type=str, default='relu')
-    #parser.add_argument("-w", "--width", help="width", type=int, default=100)
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
     parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=5)
     args = parser.parse_args()
 
-    d = Dispensor(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
+    d = Dispenser(args.worker_cnt, dir=args.output, single_mode=args.worker_cnt == 1)
     d.add(ListSampler([5]), 'batch_mul')
     d.add(ListSampler([0.01]), 'lr')
     d.add(ListSampler([0.01]), 'init')
     d.add(ListSampler([5]), 'y_scale')
     d.add(ListSampler([1.6]), 'alpha')
-    #d.add(ListSampler(np.arange(2,70,2)), 'width')
-    d.add(ListSampler(np.arange(20,22,1)), 'width')
-    d.add(ListSampler(np.arange(5)), 'dummy')
+    d.add(ListSampler(np.arange(2,50,2)), 'width')
+    d.add(ListSampler(np.arange(50)), 'dummy') # repeat count
     zero_mean_str = 'zero_' if args.zero_mean else ''
 
     for d_args in d:

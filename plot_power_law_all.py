@@ -3,17 +3,11 @@ matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-import os
-import copy
-from save_load import YamlReader
-from executor import Dispensor, RangeSampler, ChopSampler, ListSampler
-from functools import partial
-from collections import OrderedDict
-import yaml
+import mpmath
 import string
 
 matplotlib.rcParams['mathtext.fontset'] = 'cm'
-matplotlib.rc('font', **{'size':11})
+matplotlib.rc('font', **{'size':12})
 
 def exp_format(cka):
     s = f"{cka: .1e}"
@@ -37,36 +31,58 @@ def cumul_std(arr):
 def trunc(values, decs=3):
     return np.trunc(values*10**decs)/(10**decs)
 
-def data_power(x, alpha, eigs, s=1):
-    return np.sum(eigs*(1-eigs))*np.power(s,2)*np.power(x,-(alpha)/(alpha+1))/2
+def param_const(S, init, alpha, zeta):
+    const = 1/(alpha * zeta)
+    print('param:', const)
+    return const * np.power(S,2)/2
 
-def temp_power(x, alpha, eigs, s=1,init=0.1):
-    return np.power(s-np.power(init,2),2)*np.power(x,-(alpha)/(alpha+1))/2
+def data_const(S, init, alpha, zeta):
+    const1 = mpmath.gamma(alpha/(alpha+1))
+    const1 /= (alpha+1)*np.power(zeta,1/(alpha+1))
+    const2 = 0
+    const = const1+const2
+    print('data:', const)
+    return const * np.power(S-np.power(init,2),2)/2
 
-def param_power(x, alpha, eigs, s=1):
-    return np.power(s,2)/(alpha+1)*np.power(x,-alpha)/2
+def time_const(S, init, alpha, zeta):
+    lr = 1
+    #integral constants calculated by Mathematica
+    integral_consts = {0.3: 1.29, 0.6:1.20, 0.9:1.06}
+    const = integral_consts[alpha]
+    const /= np.power(lr*S, alpha/(alpha+1))
+    print('time: ', const)
+    return const * np.power(S,2)/2
 
-def data_theo(ns, eigs, s=1):
-    return [np.sum(np.power((1 - eigs), n)*np.power(s,2)*eigs)/2 for n in ns]
+def data_power(x, S, init, alpha, zeta):
+    return data_const(S, init, alpha, zeta)*np.power(x,-(alpha)/(alpha+1))
 
-def temp_theo(x, eigs, s=1, lr=1, init=0.1):
+def temp_power(x, S, init, alpha, zeta):
+    return time_const(S, init, alpha, zeta)*np.power(x,-(alpha)/(alpha+1))
+
+def param_power(x, S, init, alpha, zeta):
+    return param_const(S, init, alpha, zeta)*np.power(x,-alpha)
+
+def data_theo(ns, probs, s=1):
+    return [np.sum(np.power((1 - probs), n)*np.power(s,2)*probs)/2 for n in ns]
+
+def temp_theo(x, probs, s=1, lr=1, init=0.1):
     c = s/np.power(init,2)-1
     ret = 0
-    for eig in eigs:
-        ret += np.power(s-s/(1+c*np.exp(-eig*2*s*x*lr)),2)*eig
+    for prob in probs:
+        ret += np.power(s-s/(1+c*np.exp(-prob*2*s*x*lr)),2)*prob
     return ret/2
 
-def param_theo(ps, eigs, s):
-    ret = [np.power(s,2)/2 * np.sum(eigs[p:]) for p in ps]
+def param_theo(ps, probs, s):
+    ret = [np.power(s,2)/2 * np.sum(probs[p:]) for p in ps]
     return ret
 
 
-def plot_ax(ax, theo_func, power_func, name, eigss, alphas, idx, max_range=10000):
+def plot_ax(ax, theo_func, power_func, name, probss, alphas, zetas, idx, init, s=1, max_range=10000):
     ts = np.arange(1,max_range)
-    for i, eigs in enumerate(eigss):
-        ax.plot(ts, theo_func(ts, eigs,s=1), color=f'C{i}')
-        ax.plot(ts, power_func(ts, alphas[i], eigs, s=1), color=f'C{i}', linestyle='dotted')
-    ax.set_title(latex_transform(f'{name} Scaling',idx,alp=True), y=-0.4)
+    for i, (probs, zeta) in enumerate(zip(probss,zetas)):
+        ax.plot(ts, theo_func(ts, probs,s=s), color=f'C{i}')
+        ax.plot(ts, power_func(ts, s, init, alphas[i], zeta), color=f'C{i}', linestyle='dotted')
+    ax.set_title(latex_transform(f'{name} scaling',idx,alp=True), y=-0.4)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0,
                      box.width, box.height * 0.9])
@@ -76,54 +92,53 @@ def plot_ax(ax, theo_func, power_func, name, eigss, alphas, idx, max_range=10000
     ax.set_ylabel(r'$\mathcal{L}$')
 
 
-def plot_all(alphas, p = 1):
+def plot_all(alphas, n_s = 1, init=0.1):
     fig, axs = plt.subplots(1, 3, figsize=(10,2.5),gridspec_kw={'top':0.95, 'bottom': 0.15})
     plt.subplots_adjust(wspace=0.36)
 
-    eigss = []
+    probss = []
+    zetas = []
     for alpha in alphas:
-        eigs = np.power(np.arange(p) + 1, -float(alpha)-1)
-        eigs /= np.sum(eigs)
-        eigss.append(eigs)
-    linst = ['solid', 'dashed', 'dotted']
-    plot_ax(axs[0], temp_theo, temp_power, 'Time', eigss, alphas, 0,10000)
+        probs = np.power(np.arange(n_s) + 1, -float(alpha)-1)
+        zetas.append(np.sum(probs))
+        probs /= zetas[-1]
+        probss.append(probs)
+
+    plot_ax(axs[0], temp_theo, temp_power, 'Time', probss, alphas, zetas, 0, init=init, max_range=10000)
     axs[0].set_xlabel('$T$')
     ps0 = [axs[0].plot([0], [0], color='black', linestyle='dotted')[0]]
-    legend0 = plt.legend(ps0, [r'$\mathcal{L}\propto T^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-2.03, 0.3),
+    legend0 = plt.legend(ps0, [r'$\mathcal{L} = \mathcal{A}_T T^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-1.875, 0.3),
                          handlelength=1, frameon=False)
-    legend00 = plt.legend(ps0, [r'$D,N\rightarrow \infty$'],bbox_to_anchor=(-2.13, 0.4),
+    legend00 = plt.legend(ps0, [r'$D,N\rightarrow \infty$'],bbox_to_anchor=(-2.1, 0.4),
                          handlelength=0, frameon=False)
     fig.add_artist(legend0, )
     fig.add_artist(legend00 )
 
-    plot_ax(axs[1], data_theo, data_power, 'Data', eigss, alphas, 1, 1000)
+    plot_ax(axs[1], data_theo, data_power, 'Data', probss, alphas, zetas, 1, init=init, max_range= 1000)
     axs[1].set_xlabel('$D$')
     ps1 = [axs[1].plot([0], [0], color='black', linestyle='dotted')[0]]
-    legend1 = plt.legend(ps1, [r'$\mathcal{L}\propto D^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-0.65, 0.3),
+    legend1 = plt.legend(ps1, [r'$\mathcal{L} =\mathcal{A}_D D^{-\alpha/(\alpha+1)}$'],bbox_to_anchor=(-0.5, 0.3),
                          handlelength=1, frameon=False)
-    legend10 = plt.legend(ps1, [r'$N,T\rightarrow \infty$'],bbox_to_anchor=(-0.8, 0.4),
+    legend10 = plt.legend(ps1, [r'$N,T\rightarrow \infty$'],bbox_to_anchor=(-0.77, 0.4),
                           handlelength=0, frameon=False)
     fig.add_artist(legend1, )
     fig.add_artist(legend10 )
 
-    plot_ax(axs[2], param_theo, param_power, 'Parameter', eigss, alphas, 2, 100)
+    plot_ax(axs[2], param_theo, param_power, 'Parameter', probss, alphas, zetas, 2, init=init, max_range= 100)
     axs[2].set_xlabel('$N$')
     ps2 = [axs[2].plot([0], [0], color='black', linestyle='dotted')[0]]
-    legend2 = plt.legend(ps2, [r'$\mathcal{L}\propto N^{-\alpha}$'],bbox_to_anchor=(0.53, 0.3),
+    legend2 = plt.legend(ps2, [r'$\mathcal{L} =\mathcal{A}_N N^{-\alpha}$'],bbox_to_anchor=(0.66, 0.3),
                          handlelength=1, frameon=False)
-    legend20 = plt.legend(ps2, [r'$T,D\rightarrow \infty$'],bbox_to_anchor=(0.58, 0.4),
+    legend20 = plt.legend(ps2, [r'$T,D\rightarrow \infty$'],bbox_to_anchor=(0.6, 0.4),
                           handlelength=0, frameon=False)
     fig.add_artist(legend2, )
     fig.add_artist(legend20 )
 
-    handles, labels = axs[0].get_legend_handles_labels()
     ps = [axs[0].plot([0], [0], color=f'C{i}', linestyle='solid')[0] for i, tit in enumerate(alphas)]
-    #legend1 = plt.legend(ps, [title for title in titles], ncol=len(titles), loc=(-0.55,1.1))
     legend_ = plt.legend(ps, [r'$\alpha=$' + f'{alpha}' for alpha in alphas], ncol=len(alphas), loc='lower center',
                          fontsize=13,
                          columnspacing=1, handlelength=1, bbox_to_anchor=(-1.9, 1.00, 2.0, 0.3), frameon=False)
     fig.add_artist(legend_)
-    #plt.gca().add_artist(legend1)
 
     fig.savefig(f'plot/power_law_all', dpi=300, bbox_inches='tight')
     fig.savefig(f'plot/power_law_all.pdf',format="pdf", dpi=300, bbox_inches='tight')
@@ -131,15 +146,6 @@ def plot_all(alphas, p = 1):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--worker_cnt", help="total workers", type=int, default=1)
-    parser.add_argument("-o", "--output", help="outputpath", type=str, default=os.getcwd())
-    parser.add_argument("-m", "--modelfile", help="model_file", type=str, default='base.data')
-    parser.add_argument("-d", "--d", help="plot_dnn", type=bool, default=True)
-    parser.add_argument("-t", "--use_train", help="use_train_set", type=bool, default=False)
-    parser.add_argument("-p", "--use_prev", help="use_train_set", type=bool, default=False)
-    parser.add_argument("-r", "--repeats", help="repeats", type=int, default=2)
-    parser.add_argument("-e", "--exp_name", help="exp_name", type=str, default='ww')
-    parser.add_argument("-s", "--train_set", help="train_set", type=bool, default=True)
+    parser.add_argument("-p", "--n_s", help="total number of skills", type=int, default=100000)
     args = parser.parse_args()
-    plot_all([0.3 ,0.6, 0.9], p = 10000)
-    #plot_all([0.3 ,0.6, 0.9], p = 100)
+    plot_all([0.3 ,0.6, 0.9], n_s = args.n_s)
