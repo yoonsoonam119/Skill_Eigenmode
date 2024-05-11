@@ -18,5 +18,5 @@ This is a git for "An exactly solvable model for emergence and scaling laws".
     * This code runs the experiments for time, data, and parameter for $n_s=1$ system and saves the results in data/zero/{time,data,parameter}. <br />
 
 * plot_emergence_calibration_all.py <br />
-    * After the $n_s=1$ system data has been gathered in data/zero/{time,data,parameter}, this code plots the calibration plot (Fig.??) in the paper. <br />
+    * After the $n_s=1$ system data has been gathered in data/zero/{time,data,parameter}, this code plots the calibration plot (Fig.11) in the appendix. <br />
 
