@@ -3,7 +3,6 @@ matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-# from utils_agd2 import file2mem, file2mem_single
 import argparse
 import os
 import string
@@ -152,7 +151,6 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--bits", help="bits", type=int, default=16)
     parser.add_argument("-p", "--opt", help="opts", type=str, default='sgd')
     parser.add_argument("-a", "--act", help="activation", type=str, default='relu')
-    #parser.add_argument("-w", "--width", help="width", type=int, default=100)
     parser.add_argument("-z", "--zero_mean", help="zero_mean", type=int, default=1)
     parser.add_argument("-c", "--skill_cnt", help="skill_cnt", type=int, default=6)
     parser.add_argument("-s", "--theparam", help="theparam", type=float, default=6)
