@@ -1,12 +1,11 @@
 import os
-from utils_transformer import write2file, FCN, check_corrs, train_loop
+from utils_transformer import write2file, check_corrs, train_loop
 import numpy as np
 import torch
 import torch.nn as nn
 from data_generator import Loader
 import argparse
-import math
-from executor import Dispenser, RangeSampler, ChopSampler, ListSampler
+from executor import Dispenser, ListSampler
 from transformer_model import GPT
 import copy, datetime
 
@@ -124,14 +123,3 @@ if __name__ == '__main__':
                         'skill_bit_cnt':3, 'y_scale': args.y_scale, 'opt':args.opt, 'act':args.act}
         te_loss, skill_loss, corrs, skill_mask = run(args, zero_mean = args.zero_mean, data_cnt=d_args['data_cnt'], **param_dict)
         write2file('data', d_args['data_cnt'], skill_loss, corrs, te_loss, param_dict, zero=args.zero_mean)
-        '''    
-            te_losses_arr.append(te_loss)
-            skill_losses_arr.append(skill_losses)
-            corrs_arr.append(corrs)
-            #np.save(f'data/skill_mask_{dict_str}{try_str}', skill_mask)
-            #torch.save(model.state_dict(), f'data/model_{dict_str}{try_str}')
-        print(dict_str)
-        np.save(f'data/{zero_mean_str}finite_skill_losses_{dict_str}', np.stack(skill_losses_arr))
-        np.save(f'data/{zero_mean_str}finite_corrs_{dict_str}', np.stack(corrs_arr))
-        np.save(f'data/{zero_mean_str}finite_te_loss_{dict_str}', np.stack(te_losses_arr))
-        '''
