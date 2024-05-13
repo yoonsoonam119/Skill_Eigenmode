@@ -54,7 +54,7 @@ if __name__ == '__main__':
     d.add(ListSampler([0.01, 0.04, 0.1]), 'init')
     d.add(ListSampler([5]), 'y_scale')
     d.add(ListSampler([1.3, 1.6, 1.9, 3.0]), 'alpha')
-    try_cnt = 50
+    try_cnt = 10
     zero_mean_str = 'zero' if args.zero_mean else ''
 
     for d_args in d:

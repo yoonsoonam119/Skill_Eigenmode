@@ -60,7 +60,7 @@ if __name__ == '__main__':
         data_list = [2000,4000]
     print(data_list)
     d.add(ListSampler(data_list), 'data_cnt')
-    d.add(ListSampler(np.arange(50)), 'try') #repeat count
+    d.add(ListSampler(np.arange(10)), 'try') #repeat count
     zero_mean_str = 'zero_' if args.zero_mean else ''
 
     for d_args in d:
