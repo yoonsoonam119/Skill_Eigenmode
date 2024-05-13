@@ -6,3 +6,8 @@
 !/plot/data/.gitignore
 !/plot/parameter/.gitignore
 !/plot/time/.gitignore
+__pycache__/data_generator.cpython-39.pyc
+__pycache__/executor2.cpython-39.pyc
+__pycache__/transformer_model.cpython-39.pyc
+__pycache__/utils_agd.cpython-39.pyc
+__pycache__/utils.cpython-39.pyc

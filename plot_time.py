@@ -106,3 +106,17 @@ if __name__ == '__main__':
         plt.savefig(f'plot/time/time_skill_{dict2str(**param_dict)}.pdf', format='pdf', dpi=300, bbox_inches='tight')
         plt.close()
 
+        # fig, ax = plt.subplots()
+        # for i, (s_mean, s_std) in enumerate(zip(skills_mean, skills_std)):
+        #     xs = np.array([(100*i)+1 for i in range(len(s_mean))])
+        #     ax.errorbar(xs, s_mean, s_std, label=rf'$k={i}$', color=f'C{i}')
+        #     ax.plot(xs, np.power(param_dict['y_scale']*(1-theo(xs, param_dict, args, eigs[i])),2), linestyle='dashed', color=f'C{i}')
+        # ax.legend()
+        # ax.set_xlabel(R'$T$')
+        # ax.set_ylabel(r'$\mathcal{L}_k$')
+        # # ax.set_xlim([1e3, 1e6])
+        # # ax.set_xscale('log')
+        # plt.savefig(f'plot/time/time_skill_{NAME}', bbox_inches='tight')
+        # # plt.savefig(f'plot/time/time_skill_{NAME}.pdf', format='pdf', dpi=300, bbox_inches='tight')
+        # plt.close()
+
