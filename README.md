@@ -20,3 +20,9 @@ This is a git for "An exactly solvable model for emergence and scaling laws".
 * plot_emergence_calibration_all.py <br />
     * After the $n_s=1$ system data has been gathered in data/zero/{time,data,parameter}, this code plots the calibration plot (Fig.11) in the appendix. <br />
 
+* train_transformer.py <br />
+    * Train the transformer (Fig.4) and save the data. <br />
+
+* plot_time2.py <br />
+    * Create transformer figure (Fig.4) in the main text from learned data. <br />
+

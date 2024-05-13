@@ -99,8 +99,8 @@ def plot_all(alphas, n_s = 1):
                          columnspacing=1, handlelength=1, bbox_to_anchor=(-1.9, 1.00, 2.0, 0.3), frameon=False)
     fig.add_artist(legend_)
 
-    fig.savefig(f'plot/simul_compute_scaling', dpi=300, bbox_inches='tight')
-    fig.savefig(f'plot/simul_compute_scaling.pdf',format="pdf", dpi=300, bbox_inches='tight')
+    fig.savefig(f'plot/compute_power_law', dpi=300, bbox_inches='tight')
+    fig.savefig(f'plot/compute_power_law.pdf',format="pdf", dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 if __name__ == '__main__':
