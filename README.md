@@ -2,11 +2,11 @@ This is a git for "An exactly solvable model for emergence and scaling laws".
 
 * plot_power_law_all.py <br />
     * This code plots scaling law figure (Fig.2) in the paper, which is saved as plots/power_law_all. <br />
-    * WARNING: The constant for time scaling law requires an integral calculation, which was done by mathematica and is hard-coded in the code.<br />   
+    * WARNING: The constant for time scaling law requires an integral calculation, which was done by Wolfram Mathematica and is hard-coded in the code.<br />   
  
 * plot_compute_power_law_all.py <br />
     * This code plots the optimal compute scaling law figure (Fig. 3) in the paper, which is saved as plots/compute_power_law. <br />
-    * WARNING: The constant for compute scaling law requires an integral calculation, which was done by mathematica and is hard-coded in the code.  <br />
+    * WARNING: The constant for compute scaling law requires an integral calculation, which was done by Wolfram Mathematica and is hard-coded in the code.  <br />
 
 * train_{time,data,parameter}.py <br />
     * This code runs the experiments for time, data, and parameter emergence and saves the results in data/zero/{time,data,parameter}. <br />
