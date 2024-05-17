@@ -35,7 +35,7 @@ def theo_param_loss(xs, param_dict, theparam,  idx):
     return np.clip(val, 0, 1)
 
 def theo_param(xs, param_dict, the_param, idx):
-    val = (xs + -(idx)*the_param)/the_param
+    val = (xs -(idx)*the_param)/the_param
     return np.clip(val, 0, 1)
 
 def theo_time(xs, param_dict, theparam, idx):
