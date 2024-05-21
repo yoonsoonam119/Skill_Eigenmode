@@ -1,4 +1,4 @@
-# This is a git for "An exactly solvable model for emergence and scaling laws".
+# This is a git for "An exactly solvable model for emergence and scaling laws" (submitted to Neurips 2024).
 
 ## Requirements
 This code requires numpy, Pytorh 2.0 or higher, torchvision, and matplotlib.
