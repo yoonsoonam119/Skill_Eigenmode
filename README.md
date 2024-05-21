@@ -1,4 +1,9 @@
-This is a git for "An exactly solvable model for emergence and scaling laws".
+# This is a git for "An exactly solvable model for emergence and scaling laws".
+
+## Requirements
+This code requires numpy, Pytorh 2.0 or higher, torchvision, and matplotlib.
+
+## Instructions
 
 * plot_power_law_all.py <br />
     * This code plots scaling law figure (Fig.2) in the paper, which is saved as plots/power_law_all. <br />
