@@ -1,7 +1,7 @@
-# This is a git for "An exactly solvable model for emergence and scaling laws" (submitted to Neurips 2024).
+# This is a git for [An exactly solvable model for emergence and scaling laws in the multitask sparse parity problem ](https://arxiv.org/abs/2404.17563)(NeurIPS 2024).
 
 ## Requirements
-This code requires numpy, Pytorh 2.0 or higher, torchvision, and matplotlib.
+This code requires numpy, Pytorch 2.0 or higher, torchvision, and matplotlib.
 
 ## Instructions
 
